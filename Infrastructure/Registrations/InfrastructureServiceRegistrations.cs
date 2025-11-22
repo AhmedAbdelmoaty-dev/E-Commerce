@@ -1,9 +1,11 @@
-﻿using Application.Contracts.Repositories;
+﻿using Application.Contracts.EmailSender;
+using Application.Contracts.Repositories;
 using Application.Contracts.Seeders;
 using Application.Contracts.Services;
 using Infrastructure.Data;
 using Infrastructure.Data.Seeders;
 using Infrastructure.IdentityEntities;
+using Infrastructure.Options;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
@@ -18,11 +20,21 @@ namespace Infrastructure.Extensions
     {
         public static void AddInfrastructureServices(this IServiceCollection services,IConfiguration configuration)
         {
-            services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<AppDbContext>(opt =>
+            {
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
+                opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            });
+     
             
             services.AddScoped(typeof(IGenericRepository<>),typeof(GenericRepository<>));
             
             services.AddScoped<IProductSeeder, ProductSeeder>();
+
+            services.AddTransient<IEmailService,EmailService>();
+
+            services.Configure<EmailOptions>(configuration.GetSection("EmailSettings"));
+
             services.AddScoped<IProductRepository, ProductRepository>();
 
             services.AddScoped<IDeliveryMethodSeeder, DeliveryMethodSeeder>();

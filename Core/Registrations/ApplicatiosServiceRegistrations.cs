@@ -1,5 +1,8 @@
-﻿using FluentValidation;
+﻿using Application.Options;
+using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 
 
 namespace Application.Extensions
@@ -13,6 +16,8 @@ namespace Application.Extensions
             services.AddAutoMapper(typeof(ApplicatiosServiceRegistrations).Assembly);
 
             services.AddValidatorsFromAssembly(typeof(ApplicatiosServiceRegistrations).Assembly);
+
+            
 
         }
     }
