@@ -1,5 +1,8 @@
 ﻿using Application.Auth.Commands.Dtos;
+using Application.Common.Email;
+using Application.Contracts.EmailSender;
 using Application.Contracts.Services;
+using Application.DTOS;
 using Application.Exceptions;
 using AutoMapper;
 using Infrastructure.IdentityEntities;
@@ -14,11 +17,14 @@ namespace Application.Auth.Commands.Register
         private readonly ITokenService _tokenService;
         private readonly UserManager<AppUser> _userManager;
         private readonly IMapper _mapper;
-        public RegisterCommandHandler(ITokenService tokenService,UserManager<AppUser> userManager, IMapper mapper)
+        private readonly IBackgroundJobService _backgroundJobService;
+        public RegisterCommandHandler(ITokenService tokenService,UserManager<AppUser> userManager
+            , IMapper mapper, IBackgroundJobService backgroundJob)
         {
             _tokenService = tokenService;
             _userManager = userManager;
             _mapper = mapper;
+            _backgroundJobService = backgroundJob;
         }
         public async Task<AuthDto> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
@@ -47,6 +53,11 @@ namespace Application.Auth.Commands.Register
             {
                 throw new BadRequestException(string.Join(",", result.Errors.Select(e => e.Description)));
             }
+
+            //sending welcome email via hangfire
+            _backgroundJobService.Enqueue<IEmailService>(x => x.SendWelcomeEmailAsync(user.UserName,user.Email));
+
+
             return new AuthDto
             {
                 Token = token,

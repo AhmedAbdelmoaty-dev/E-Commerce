@@ -6,6 +6,7 @@ using FluentValidation.AspNetCore;
 using Infrastructure.Extensions;
 using API.Middlewares;
 using API.Registrations;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +35,7 @@ using (var scope =app.Services.CreateScope())
 
 app.UseMiddleware<ErrorHandelingMiddleware>();
 
-
+app.UseHangfireDashboard();
 
 
 if (app.Environment.IsDevelopment())

@@ -1,4 +1,5 @@
-﻿using Application.Contracts.EmailSender;
+﻿using Application.Common.Email;
+using Application.Contracts.EmailSender;
 using Application.DTOS;
 using Infrastructure.Options;
 using MailKit.Net.Smtp;
@@ -12,9 +13,11 @@ namespace Infrastructure.Services
     public class EmailService : IEmailService
     {
         private readonly EmailOptions _settings;
-        public EmailService(IOptions<EmailOptions> settings)
+        private readonly IEmailTemplateService _emailTemplate;
+        public EmailService(IOptions<EmailOptions> settings,IEmailTemplateService emailTemplate)
         {
             _settings = settings.Value;
+            _emailTemplate  = emailTemplate;
         }
         public async Task SendEmailAsync(EmailDto request)
         {
@@ -39,6 +42,26 @@ namespace Infrastructure.Services
             await smtp.DisconnectAsync(true);
 
 
+        }
+
+        public async Task SendForgetPasswordAsync(string UserName, string email, string ResetLink)
+        {
+            var body = _emailTemplate.GetForgetPasswordTemplate(UserName, ResetLink);
+
+            var emailDto = new EmailDto(email, "Forget Password", body);
+
+            await SendEmailAsync(emailDto);
+        }
+
+        public async Task SendWelcomeEmailAsync(string UserName, string email)
+        {
+           
+
+            var body = _emailTemplate.GetWelcomeEmailTemplate(UserName);
+
+            var emailDto = new EmailDto(email, "Welcome to  E-Commerce app", body);
+
+            await SendEmailAsync(emailDto);
         }
     }
 }

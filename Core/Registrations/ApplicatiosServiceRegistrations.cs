@@ -1,4 +1,5 @@
-﻿using Application.Options;
+﻿using Application.Common.Email;
+using Application.Options;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ namespace Application.Extensions
 
             services.AddValidatorsFromAssembly(typeof(ApplicatiosServiceRegistrations).Assembly);
 
-            
+            services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
 
         }
     }

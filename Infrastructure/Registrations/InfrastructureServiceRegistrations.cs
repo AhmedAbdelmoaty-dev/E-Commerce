@@ -2,6 +2,8 @@
 using Application.Contracts.Repositories;
 using Application.Contracts.Seeders;
 using Application.Contracts.Services;
+using Hangfire;
+using Hangfire.MySql;
 using Infrastructure.Data;
 using Infrastructure.Data.Seeders;
 using Infrastructure.IdentityEntities;
@@ -13,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
-
+using System.Transactions;
 namespace Infrastructure.Extensions
 {
     public static class InfrastructureServiceRegistrations
@@ -32,6 +34,23 @@ namespace Infrastructure.Extensions
             services.AddScoped<IProductSeeder, ProductSeeder>();
 
             services.AddTransient<IEmailService,EmailService>();
+
+            services.AddHangfire(x =>
+            {
+                x.UseStorage(
+                     new MySqlStorage(
+                    configuration.GetConnectionString("DefaultConnection"),
+                     new MySqlStorageOptions
+                     {
+                         TablesPrefix = "Hangfire", // optional
+                         TransactionIsolationLevel = IsolationLevel.ReadCommitted,
+                         QueuePollInterval = TimeSpan.FromSeconds(15),
+                     }));
+            });
+
+            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+
+            services.AddHangfireServer();
 
             services.Configure<EmailOptions>(configuration.GetSection("EmailSettings"));
 

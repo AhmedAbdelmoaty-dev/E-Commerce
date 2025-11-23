@@ -1,4 +1,6 @@
-﻿using Application.Contracts.EmailSender;
+﻿using Application.Common.Email;
+using Application.Contracts.EmailSender;
+using Application.Contracts.Services;
 using Application.DTOS;
 using Application.Options;
 using Infrastructure.IdentityEntities;
@@ -11,16 +13,16 @@ namespace Application.Auth.Commands.ForgetPassword
 {
     public class ForgetPasswordCommandHandler : IRequestHandler<ForgetPasswordCommand>
     {
-
-        private readonly IEmailService _emailService;
         private readonly UserManager<AppUser> _userManager;
         private readonly IOptions<FrontendOptions> _frontendOptions;
-        public ForgetPasswordCommandHandler(IEmailService emailService
-            ,UserManager<AppUser> userManager,IOptions<FrontendOptions> options)
+        private readonly IBackgroundJobService _backgroundJobService;
+
+        public ForgetPasswordCommandHandler(UserManager<AppUser> userManager,IOptions<FrontendOptions> options,
+            IBackgroundJobService backgroundJob)
         {
-            _emailService=emailService;
             _userManager=userManager;
             _frontendOptions = options;
+            _backgroundJobService=backgroundJob;
         }
         public async Task Handle(ForgetPasswordCommand request, CancellationToken cancellationToken)
         {
@@ -35,16 +37,10 @@ namespace Application.Auth.Commands.ForgetPassword
 
           var frontendUrl = _frontendOptions.Value.ResetPasswordUrl;
 
-          var url = $"{frontendUrl}?email={request.Email}&token={encodedToken}";
+          var resetLink = $"{frontendUrl}?email={request.Email}&token={encodedToken}";
 
-          var body = $@"
-            <h2>Reset Your Password</h2>
-            <p>Click the link below to reset your password:</p>
-            <a href='{url}'>Reset Password</a>";
 
-            var emailDto = new EmailDto(request.Email, "Reset Password", body);
-
-            await _emailService.SendEmailAsync(emailDto);
+            _backgroundJobService.Enqueue<IEmailService>(x =>x.SendForgetPasswordAsync(user.UserName,user.Email, resetLink));
 
         }
     }

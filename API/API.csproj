@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -6,6 +6,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>d29bf319-b1c2-4ab8-a884-86f2d7c9a3ca</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EmailTemplates\ForgetPasswordEmail.html" />
+    <None Remove="EmailTemplates\WelcomeEmail.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="EmailTemplates\ForgetPasswordEmail.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="EmailTemplates\WelcomeEmail.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
