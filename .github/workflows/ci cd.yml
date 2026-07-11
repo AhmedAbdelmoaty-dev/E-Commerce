@@ -123,7 +123,7 @@ jobs:
           aws ecs describe-task-definition --task-definition ${{vars.AWS_TASK_DEFINITION_NAME}} --query taskDefinition > task-definition.json  
           
       - name: update image in task definition
-        uses: aws-actions/amazon-ecs-render-task-definition@v2
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
         id: task-def
         with:
           task-definition: task-definition.json
