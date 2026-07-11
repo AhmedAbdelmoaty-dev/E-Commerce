@@ -41,8 +41,7 @@ namespace API.Controllers
             var result = await _mediator.Send(command);
             //SetRefreshToken(result.RefreshToken,result.RefreshTokenExpiration);
             return Ok(result);
-            // test ci cd hello world world
-            // hello world
+           
         }
 
         [Authorize]
