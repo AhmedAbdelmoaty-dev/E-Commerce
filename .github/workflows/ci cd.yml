@@ -126,7 +126,23 @@ jobs:
       
       - name: download task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{vars.AWS_TASK_DEFINITION_NAME}} --query taskDefinition > task-definition.json  
+         aws ecs describe-task-definition \
+         --task-definition ${{vars.AWS_TASK_DEFINITION_NAME}} \
+         --query taskDefinition \
+         --output json > task-definition.json
+     
+         jq 'del(
+           .taskDefinitionArn,
+           .revision,
+           .status,
+           .requiresAttributes,
+           .compatibilities,
+           .registeredAt,
+           .registeredBy,
+           .enableFaultInjection
+         )' task-definition.json > clean-task-definition.json
+     
+         mv clean-task-definition.json task-definition.json
           
       - name: update image in task definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
