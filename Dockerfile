@@ -34,4 +34,6 @@ FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 COPY --from=build /app/efbundle .
+
+RUN chmod +x /app/efbundle
 ENTRYPOINT ["dotnet", "API.dll"]
