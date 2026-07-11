@@ -9,7 +9,7 @@ on:
      - Application/**
      - Infrastructure/**
      - Domain/**
-     - .github/workflows/backend.yml
+     - .github/workflows/ci cd.yml
     
 jobs:
   build:
