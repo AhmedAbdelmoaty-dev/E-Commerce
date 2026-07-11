@@ -99,6 +99,12 @@ jobs:
          --cluster ${{ vars.AWS_CLUSTER_NAME }} \
          --tasks $TASK_ARN
 
+      - name: Debug migration task
+        run: |
+          aws ecs describe-tasks \
+          --cluster ${{ vars.AWS_CLUSTER_NAME }} \
+          --tasks $TASK_ARN
+
 
 
       - name: Check migration status
@@ -107,7 +113,7 @@ jobs:
          EXIT_CODE=$(aws ecs describe-tasks \
           --cluster ${{ vars.AWS_CLUSTER_NAME }} \
           --tasks $TASK_ARN \
-          --query "tasks[0].containers[0].exitCode" \
+          --query "tasks[0].containers[?name=='${{vars.AWS_MIGRATION_CONTAINER_NAME}}'].exitCode" \
           --output text)
 
          echo "Migration exit code: $EXIT_CODE"
