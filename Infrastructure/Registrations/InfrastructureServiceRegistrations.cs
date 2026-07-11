@@ -25,7 +25,7 @@ namespace Infrastructure.Extensions
             services.AddDbContext<AppDbContext>(opt =>
             {
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
-                opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                opt.UseMySql(connectionString, new MySqlServerVersion(new Version(8,0)));
             });
      
             

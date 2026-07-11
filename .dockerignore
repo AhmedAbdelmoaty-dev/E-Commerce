@@ -1,0 +1,17 @@
+
+**/bin/
+**/obj/
+
+**/.vs/
+**/.vscode/
+*.user
+
+terraform/
+
+.git/
+.gitignore
+*.log
+
+client/
+
+**/appsettings.Development.json

@@ -1,0 +1,141 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+     - API/**
+     - Application/**
+     - Infrastructure/**
+     - Domain/**
+     - .github/workflows/backend.yml
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --no-restore
+
+      - name: install ef core tools
+        run: dotnet tool install --global dotnet-ef
+        
+
+  publish-image:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build -t e-commerce:${{github.sha}} .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{vars.AWS_REGION}}
+      
+      - name: login to Amazon ECR private registry
+        uses: aws-actions/amazon-ecr-login@v2
+       
+      - name: Push Docker Image to Amazon ECR
+        run: |
+          docker tag e-commerce:${{github.sha}}  ${{vars.AWS_ACCOUNT_ID}}.dkr.ecr.${{vars.AWS_REGION}}.amazonaws.com/${{vars.AWS_REPOSITORY_NAME}}:${{github.sha}}
+          docker push  ${{vars.AWS_ACCOUNT_ID}}.dkr.ecr.${{vars.AWS_REGION}}.amazonaws.com/${{vars.AWS_REPOSITORY_NAME}}:${{github.sha}}
+    
+  deploy:
+    needs: publish-image
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{vars.AWS_REGION}}
+
+
+      - name: Run database migration
+        id: migration
+        run: |
+         TASK_ARN=$(aws ecs run-task \
+          --cluster ${{ vars.AWS_CLUSTER_NAME }} \
+          --task-definition ${{ vars.AWS_MIGRATION_TASK_DEFINITION }} \
+          --launch-type FARGATE \
+          --network-configuration "awsvpcConfiguration={subnets=[${{ vars.PRIVATE_SUBNET_ID }}],securityGroups=[${{ vars.ECS_SECURITY_GROUP }}]}" \
+          --query "tasks[0].taskArn" \
+          --output text)
+
+         echo "TASK ARN: $TASK_ARN"
+
+         echo "TASK_ARN=$TASK_ARN" >> $GITHUB_ENV
+
+
+
+      - name: Wait for migration
+        run: |
+         aws ecs wait tasks-stopped \
+         --cluster ${{ vars.AWS_CLUSTER_NAME }} \
+         --tasks $TASK_ARN
+
+
+
+      - name: Check migration status
+        run: |
+
+         EXIT_CODE=$(aws ecs describe-tasks \
+          --cluster ${{ vars.AWS_CLUSTER_NAME }} \
+          --tasks $TASK_ARN \
+          --query "tasks[0].containers[0].exitCode" \
+          --output text)
+
+         echo "Migration exit code: $EXIT_CODE"
+
+
+         if [ "$EXIT_CODE" != "0" ]; then
+          echo "Migration failed"
+          exit 1
+         fi
+      
+      - name: download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{vars.AWS_TASK_DEFINITION_NAME}} --query taskDefinition > task-definition.json  
+          
+      - name: update image in task definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v2
+        id: task-def
+        with:
+          task-definition: task-definition.json
+          container-name: ${{vars.AWS_CONTAINER_NAME}}
+          image: ${{vars.AWS_ACCOUNT_ID}}.dkr.ecr.${{vars.AWS_REGION}}.amazonaws.com/${{vars.AWS_REPOSITORY_NAME}}:${{github.sha}}
+    
+      - name: deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{steps.task-def.outcome.task-definition}}
+          service: ${{vars.AWS_SERVICE_NAME}}
+          cluster: ${{vars.AWS_CLUSTER_NAME}}
+          wait-for-service-stability: true
+
+

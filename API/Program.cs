@@ -23,14 +23,6 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JWT"))
 
 var app = builder.Build();
 
-using (var scope =app.Services.CreateScope())
-{
-    var services= scope.ServiceProvider;
-    var productSeeder = services.GetRequiredService<IProductSeeder>();
-    await productSeeder.SeedDataAsync();
-    var deliveryMethodSeeder = services.GetRequiredService<IDeliveryMethodSeeder>();
-    await deliveryMethodSeeder.SeedDataAsync();
-}
 
 
 app.UseMiddleware<ErrorHandelingMiddleware>();
@@ -42,6 +34,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+
+    using (var scope =app.Services.CreateScope())
+{
+    var services= scope.ServiceProvider;
+    var productSeeder = services.GetRequiredService<IProductSeeder>();
+    await productSeeder.SeedDataAsync();
+    var deliveryMethodSeeder = services.GetRequiredService<IDeliveryMethodSeeder>();
+    await deliveryMethodSeeder.SeedDataAsync();
+}
 }
 app.UseHttpsRedirection();
 app.UseRouting();
