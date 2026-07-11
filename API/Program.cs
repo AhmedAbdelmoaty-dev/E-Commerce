@@ -19,6 +19,8 @@ builder.Services.AddApplicationServices();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+builder.Services.AddHealthChecks();
+
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JWT"));
 
 var app = builder.Build();
@@ -28,6 +30,8 @@ var app = builder.Build();
 app.UseMiddleware<ErrorHandelingMiddleware>();
 
 app.UseHangfireDashboard();
+
+app.MapHealthChecks("/health");
 
 
 if (app.Environment.IsDevelopment())
