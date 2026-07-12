@@ -3,13 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { Pagination } from '../../Shared/models/pagination';
 import { Product } from '../../Shared/models/product';
 import { ShopParams } from '../../Shared/models/shopParams';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ShopService {
   private  http = inject(HttpClient)
-  private Url="https://localhost:7274/api/"
+  private Url=environment.apiUrl
   types:string[]=[]
   brands:string[]=[]
   
