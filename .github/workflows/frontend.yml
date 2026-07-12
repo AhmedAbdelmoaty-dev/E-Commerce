@@ -5,9 +5,13 @@ on:
         - master
       paths:
         - 'Client/**'
+        - '.github/workflows/frontend.yml'
 jobs:
     build:
         runs-on: ubuntu-latest
+        defaults:
+          run:
+            working-directory: Client
         steps:
         - uses: actions/checkout@v4
         
