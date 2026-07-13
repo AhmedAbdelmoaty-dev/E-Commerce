@@ -363,3 +363,25 @@ MigrationBackup/
 FodyWeavers.xsd
 
 ./.github/workflows/frontend.yml
+
+# Terraform
+Terraform/.terraform/
+Terraform/*.tfstate
+Terraform/*.tfstate.*
+Terraform/.terraform.lock.hcl
+Terraform/crash.log
+Terraform/crash.*.log
+
+# Terraform variable files (may contain secrets)
+Terraform/*.tfvars
+Terraform/*.tfvars.json
+
+# Terraform plan files
+Terraform/*.tfplan
+Terraform/*.plan
+
+# Terraform override files
+Terraform/override.tf
+Terraform/override.tf.json
+Terraform/*_override.tf
+Terraform/*_override.tf.json

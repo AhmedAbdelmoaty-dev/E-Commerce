@@ -18,7 +18,7 @@ services:
     image: mysql:latest
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: admin321
     ports:
       - "3306:3306"
     volumes:
